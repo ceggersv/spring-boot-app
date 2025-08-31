@@ -10,52 +10,72 @@ import java.util.Optional;
 
 @Service
 public class UsuarioService {
-
+    
     @Autowired
     private UsuarioRepository usuarioRepository;
-
-    public List<Usuario> obtenerTodosLosUsuarios() {
+    
+    public List<Usuario> getAllUsuarios() {
         return usuarioRepository.findAll();
     }
-
-    public Optional<Usuario> obtenerUsuarioPorId(Long id) {
+    
+    public Optional<Usuario> getUsuarioById(String id) {
         return usuarioRepository.findById(id);
     }
-
-    public Optional<Usuario> obtenerUsuarioPorEmail(String email) {
+    
+    public Optional<Usuario> getUsuarioByEmail(String email) {
         return usuarioRepository.findByEmail(email);
     }
-
-    public List<Usuario> buscarUsuariosPorNombre(String nombre) {
-        return usuarioRepository.findByNombreContainingIgnoreCase(nombre).stream().toList();
+    
+    public List<Usuario> getUsuariosByNombre(String nombre) {
+        return usuarioRepository.findByNombreContainingIgnoreCase(nombre);
     }
-
-    public Usuario crearUsuario(Usuario usuario) {
+    
+    public List<Usuario> getUsuariosByApellido(String apellido) {
+        return usuarioRepository.findByApellidoContainingIgnoreCase(apellido);
+    }
+    
+    public List<Usuario> getUsuariosActivos() {
+        return usuarioRepository.findByActivo(true);
+    }
+    
+    public Usuario createUsuario(Usuario usuario) {
         if (usuarioRepository.existsByEmail(usuario.getEmail())) {
             throw new RuntimeException("Ya existe un usuario con ese email");
         }
         return usuarioRepository.save(usuario);
     }
-
-    public Usuario actualizarUsuario(Long id, Usuario usuario) {
-        Optional<Usuario> usuarioExistente = usuarioRepository.findById(id);
-        if (usuarioExistente.isPresent()) {
-            Usuario usuarioActual = usuarioExistente.get();
-            usuarioActual.setNombre(usuario.getNombre());
-            usuarioActual.setEmail(usuario.getEmail());
-            if (usuario.getPassword() != null && !usuario.getPassword().isEmpty()) {
-                usuarioActual.setPassword(usuario.getPassword());
-            }
-            return usuarioRepository.save(usuarioActual);
+    
+    public Usuario updateUsuario(String id, Usuario usuario) {
+        Optional<Usuario> existingUsuario = usuarioRepository.findById(id);
+        if (existingUsuario.isPresent()) {
+            Usuario updatedUsuario = existingUsuario.get();
+            updatedUsuario.setNombre(usuario.getNombre());
+            updatedUsuario.setApellido(usuario.getApellido());
+            updatedUsuario.setEmail(usuario.getEmail());
+            updatedUsuario.setTelefono(usuario.getTelefono());
+            updatedUsuario.setDireccion(usuario.getDireccion());
+            updatedUsuario.setActivo(usuario.isActivo());
+            return usuarioRepository.save(updatedUsuario);
         }
-        throw new RuntimeException("Usuario no encontrado con ID: " + id);
+        throw new RuntimeException("Usuario no encontrado con id: " + id);
     }
-
-    public void eliminarUsuario(Long id) {
+    
+    public void deleteUsuario(String id) {
         if (usuarioRepository.existsById(id)) {
             usuarioRepository.deleteById(id);
         } else {
-            throw new RuntimeException("Usuario no encontrado con ID: " + id);
+            throw new RuntimeException("Usuario no encontrado con id: " + id);
+        }
+    }
+    
+    public void deactivateUsuario(String id) {
+        Optional<Usuario> usuario = usuarioRepository.findById(id);
+        if (usuario.isPresent()) {
+            Usuario updatedUsuario = usuario.get();
+            updatedUsuario.setActivo(false);
+            usuarioRepository.save(updatedUsuario);
+        } else {
+            throw new RuntimeException("Usuario no encontrado con id: " + id);
         }
     }
 }
